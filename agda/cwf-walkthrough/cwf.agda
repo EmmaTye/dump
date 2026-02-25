@@ -1,6 +1,9 @@
 
 module cwf where
 
+open import Relation.Binary.HeterogeneousEquality
+  using (_≅_; ≅-to-≡; ≡-to-≅)
+  renaming (sym to hsym; trans to htrans; cong to hcong; subst to hsubst)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; sym; trans)
 
 -- TODO: is this a primitive anywhere? I can't see it
@@ -47,14 +50,36 @@ module CwF-sig (s : CwF-sorts)  where
       -- Rules
       --- substitutions:
       ϵη : (σ : Sub Γ ·) → σ ≡ ϵ -- every empty subsitution must be ϵ
-      [id] : A [ id ]ᵀ ≡ A -- ensuring that id does what we expect
+      [id]ᵀ : A [ id ]ᵀ ≡ A -- ensuring that id does what we expect
       assSub : σ ∘ (δ ∘ ν) ≡ (σ ∘ δ) ∘ ν -- substitution is associative
       idl : id ∘ σ ≡ σ -- id preserves subsitutions on the left
       idr : σ ∘ id ≡ σ -- id preserves subsitutions on the left
       [∘]ᵀ : A [ σ ∘ δ ]ᵀ ≡ A [ σ ]ᵀ [ δ ]ᵀ -- composing substitutions composes their application 
                                            -- (ensures that composition does what we expect)
       p∘ : p ∘ (σ ,, t) ≡ σ -- projects first component of a substitution
-      q[] : q [ σ ,, t ] ≡ coe (cong (Tm Γ) (trans (cong (A [_]ᵀ) (sym p∘)) [∘]ᵀ))
+      q[] : ∀ (σ : Sub Γ Δ) (t : Tm Γ (A [ σ ]ᵀ)) → q [ σ ,, t ] ≡ coe (cong (Tm Γ) (trans (cong (A [_]ᵀ) (sym p∘)) [∘]ᵀ))
                            t
                           -- q projects the first component of a substitution out as a term
+      ,η : (p {Γ} {A} ,, q) ≡ id
+      ,∘ : (σ ,, t) ∘ δ ≡ ((σ ∘ δ) ,, coe (cong (Tm Γ) (sym [∘]ᵀ))
+                                      (t [ δ ]))
+
+module CwF-proofs (s : CwF-sorts) 
+                  (sig : CwF-sig.CwF-signature s) 
+       where
+  open CwF-sorts s
+  open CwF-sig.CwF-signature sig
+  variable
+    Γ Δ Θ : Con
+    A B C : Ty _
+    t u v : Tm _ _
+    σ δ ν : Sub _ _
+
+  ση : ∀ {σ : Sub Γ (Δ , A)} → 
+       σ ≡ ((p ∘ σ) ,, coe (cong (Tm Γ) (sym [∘]ᵀ)) 
+                       (q [ σ ]))
+  ση {σ = σ} = trans (trans (sym idl) (cong (λ x → x ∘ σ) (sym ,η))) ,∘
+
+  [id] : t [ id ] ≡ coe (cong (Tm Γ) (sym [id]ᵀ)) t
+--  [id] {t = t} = trans  (sym (q[] id (t [ id ]))) _
 
