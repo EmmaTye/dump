@@ -7,8 +7,6 @@ open import Level
 open import Data.Empty
 open import Data.Sum
 
-open import FinUniverse
-
 {-
 -- Description mechanism taken from
 -- The Gentle Art of Levitation
@@ -58,7 +56,7 @@ module Descriptions where
     ind× : Description → Description
 
   variable
-    𝒟 : Description
+    𝒟 𝒟' : Description
 
   ⟦_⟧ : ∀ {𝓁} → Description → Set 𝓁 → Set 𝓁
   ⟦_⟧ {𝓁 = 𝓁} ⊤' X = Lift 𝓁 ⊤
