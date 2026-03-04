@@ -17,7 +17,6 @@ open import Data.Sum
 module Descriptions where
 
   variable
-    X Y : Set
     𝓁 : Level
 
   module Environments where
@@ -55,12 +54,9 @@ module Descriptions where
     Σ' : Σ Set (λ A → A → Description) → Description
     ind× : Description → Description
 
-  variable
-    𝒟 𝒟' : Description
-
   ⟦_⟧ : ∀ {𝓁} → Description → Set 𝓁 → Set 𝓁
   ⟦_⟧ {𝓁 = 𝓁} ⊤' X = Lift 𝓁 ⊤
-  ⟦ Σ' (A , 𝓓) ⟧ X = Σ A (λ a → ⟦ 𝓓 a ⟧ X)
+  ⟦ Σ' (A , 𝒟ₐ) ⟧ X = Σ A (λ a → ⟦ 𝒟ₐ a ⟧ X)
   ⟦ ind× 𝒟 ⟧ X = Σ X (λ _ → ⟦ 𝒟 ⟧ X)
 
   TaggedDescription : Set₁
