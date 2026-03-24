@@ -1,0 +1,6 @@
+name: gat-of-reprs
+depend:
+  -- NOTE: keep up-to-date with flake.nix agda packages
+  standard-library
+include: .
+
