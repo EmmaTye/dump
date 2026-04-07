@@ -2,7 +2,7 @@ open import Function.Base
   using (_∘_)
 open import Data.Maybe
 open import Data.Maybe.Properties
-  using (just-injective; map-just)
+  using (just-injective)
 open import Relation.Binary.PropositionalEquality
   using (_≡_; refl; cong; sym; trans; inspect; [_])
 
@@ -598,27 +598,27 @@ module BaseModel where
           in
           cong (λ b → b , c) a→ba≡b
 
-    extend : 𝟙 ⊑ (𝟙 ＋ 𝟙)
-    extend = record {
+    ＋extendl : A ⊑ (A ＋ B)
+    ＋extendl {A} {B} = record {
         ⇒ = ⇒;
         _⇐ = _⇐;
         idl = idl;
         idr = idr
-      }
-      where
-        ⇒ : 𝟙 → (𝟙 ＋ 𝟙)
-        ⇒ _ = inj₁ tt
+      } where
+        ⇒ : A → (A ＋ B)
+        ⇒ a = inj₁ a
 
-        _⇐ : (𝟙 ＋ 𝟙) → Maybe 𝟙
-        (inj₁ _) ⇐ = just tt
-        (inj₂ _) ⇐ = nothing
+        _⇐ : (A ＋ B) → Maybe A
+        (inj₁ a) ⇐ = just a
+        (inj₂ b) ⇐ = nothing
 
-        idl : ∀ {x : 𝟙} → ⇒ x ⇐ ≡ just x
-        idl {x = tt} = refl
+        idl : ∀ {a : A} → ⇒ a ⇐ ≡ just a
+        idl = refl
 
-        idr : ∀ {x : 𝟙} {y : 𝟙 ＋ 𝟙} →
-              (y ⇐) ≡ just x → ⇒ x ≡ y
-        idr {x} {inj₁ tt} is-just = refl
+        idr : ∀ {a : A} {ab : A ＋ B} →
+              ab ⇐ ≡ just a →
+              ⇒ a ≡ ab
+        idr {a} {inj₁ a} refl = refl
 
   BaseModel : BaseTT BaseTys PI
   BaseModel = record {BaseModel}

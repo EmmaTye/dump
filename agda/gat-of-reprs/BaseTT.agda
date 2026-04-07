@@ -66,10 +66,7 @@ module BaseTT where
       transportr : ∀ {A B C : Ty} → A ≅ B → C ⊑ A → C ⊑ B
       ＋⊑l : ∀ {A B C : Ty} → A ⊑ B → (A ＋ C) ⊑ (B ＋ C)
       ⋆⊑l : ∀ {A B C : Ty} → A ⊑ B → (A ⋆ C) ⊑ (B ⋆ C)
-      -- Note: 𝟙 ＋ 𝟙 is a Bit
-      -- TODO: can we add a syntax to agda inside a record
-      -- for 𝟙 ＋ 𝟙 = 𝔹?
-      extend : 𝟙 ⊑ (𝟙 ＋ 𝟙)
+      ＋extendl : ∀ {A B : Ty} → A ⊑ (A ＋ B)
 
     ＋idr : ∀ {A : Ty} → (A ＋ 𝟘) ≅ A
     ＋idr = trans≅ ＋comm ＋idl
@@ -81,8 +78,13 @@ module BaseTT where
     ＋⊑r a⊑b = transportr ＋comm (transportl ＋comm (＋⊑l a⊑b))
     ⋆⊑r : ∀ {A B C : Ty} → A ⊑ B → (C ⋆ A) ⊑ (C ⋆ B)
     ⋆⊑r a⊑b = transportr ⋆comm (transportl ⋆comm (⋆⊑l a⊑b))
+    ＋extendr : ∀ {A B : Ty} → B ⊑ (A ＋ B)
+    ＋extendr = transportr ＋comm ＋extendl
+    -- Note: 𝟙 ＋ 𝟙 is a Bit
+    -- TODO: can we add a syntax to agda inside a record
+    -- for 𝟙 ＋ 𝟙 = 𝔹?
     padl : ∀ {A : Ty} → A ⊑ ((𝟙 ＋ 𝟙) ⋆ A)
-    padl = transportl ⋆idl (⋆⊑l extend)
+    padl = transportl ⋆idl (⋆⊑l ＋extendl)
     padr : ∀ {A : Ty} → A ⊑ (A ⋆ (𝟙 ＋ 𝟙))
-    padr = transportl ⋆idr (⋆⊑r extend)
+    padr = transportl ⋆idr (⋆⊑r ＋extendl)
 
