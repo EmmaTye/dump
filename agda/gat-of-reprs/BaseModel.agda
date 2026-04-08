@@ -67,13 +67,14 @@ module BaseModel where
     
     data Prod₄ (A₁ A₂ A₃ A₄ : Set) : Set where
       prod₄ : A₁ → A₂ → A₃ → A₄ → Prod₄ A₁ A₂ A₃ A₄
-  
-  BaseTys : BaseTypes
-  BaseTys = record {
-      BaseTys;
-      Ty = Set;
-      Tm = λ A → A
-    }
+
+  instance
+    BaseTys : BaseTypes
+    BaseTys = record {
+        BaseTys;
+        Ty = Set;
+        Tm = λ A → A
+      }
 
   module PartialIsos where
 
@@ -176,8 +177,9 @@ module BaseModel where
           in
           trans (cong b→c idb→ma) idc→mb
 
-  PI : PartialIso (BaseTypes.Ty BaseTys)
-  PI = record { PartialIsos }
+  instance
+    PI : PartialIso Set
+    PI = record { PartialIsos }
 
   module BaseModel where
     open BaseTys
@@ -689,6 +691,7 @@ module BaseModel where
         idl : ∀ {𝟘x : 𝟘} → ⇒ 𝟘x ⇐ ≡ just 𝟘x
         idl {()}
 
-  BaseModel : BaseTT BaseTys PI
-  BaseModel = record {BaseModel}
+  instance
+    BaseModel : BaseTT
+    BaseModel = record {BaseModel}
 

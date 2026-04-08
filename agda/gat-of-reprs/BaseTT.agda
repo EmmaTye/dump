@@ -21,7 +21,9 @@ module BaseTT where
       Prod₃ : Ty → Ty → Ty → Ty
       Prod₄ : Ty → Ty → Ty → Ty → Ty
 
-  record PartialIso {𝓁} (Ty : Set (lsuc 𝓁)) 
+  open BaseTypes ⦃ ... ⦄
+
+  record PartialIso {𝓁} (Ty : Set (lsuc 𝓁))
                     : Set (lsuc 𝓁) where
     field
       _≅_ : Ty → Ty → Set 𝓁
@@ -39,13 +41,13 @@ module BaseTT where
     _⊒_ : Ty → Ty → Set 𝓁
     A ⊒ B = B ⊑ A
 
-  record BaseTT {𝓁} (BT : BaseTypes {𝓁})
-                    (PI : PartialIso (BaseTypes.Ty BT))
-                : Set (lsuc 𝓁) where
-    open BaseTypes BT
-    open PartialIso PI
+  open PartialIso ⦃ ... ⦄
+
+  record BaseTT {𝓁} : Set (lsuc (lsuc 𝓁)) where
 
     field
+      ⦃ BT ⦄ : BaseTypes {𝓁}
+      ⦃ PI ⦄ : PartialIso Ty
       -- Commutative semi-ring on (＋,𝟘,⋆,𝟙)
       ＋idl : ∀ {A : Ty} → (𝟘 ＋ A) ≅ A
       ＋comm : ∀ {A B : Ty} → (A ＋ B) ≅ (B ＋ A)
