@@ -469,6 +469,62 @@ module BaseModel where
               ⇒ (abcd ⇐) ≡ abcd
         idr {prod₄ a b c d} = refl
 
+    ＋≅l : A ≅ B → (A ＋ C) ≅ (B ＋ C)
+    ＋≅l {A} {B} {C}
+         record { ⇒ = a→b;
+                  _⇐ = b→a;
+                  idl = ida→b;
+                  idr = idb→a } =
+       record {
+         ⇒ = ⇒;
+         _⇐ = _⇐;
+         idl = idl;
+         idr = idr
+       } where
+         ⇒ : A ＋ C → B ＋ C
+         ⇒ (inj₁ a) = inj₁ (a→b a)
+         ⇒ (inj₂ c) = inj₂ c
+
+         _⇐ : B ＋ C → A ＋ C
+         (inj₁ b) ⇐ = inj₁ (b→a b)
+         (inj₂ c) ⇐ = inj₂ c
+
+         idl : ∀ {ac : A ＋ C} →
+                ⇒ ac ⇐ ≡ ac
+         idl {inj₁ a} = cong inj₁ ida→b
+         idl {inj₂ c} = refl
+
+         idr : ∀ {bc : B ＋ C} →
+                ⇒ (bc ⇐) ≡ bc
+         idr {inj₁ b} = cong inj₁ idb→a
+         idr {inj₂ c} = refl
+
+    ⋆≅l : A ≅ B → (A ⋆ C) ≅ (B ⋆ C)
+    ⋆≅l {A} {B} {C}
+        record { ⇒ = a→b;
+                 _⇐ = b→a;
+                 idl = ida→b;
+                 idr = idb→a } =
+      record {
+        ⇒ = ⇒;
+        _⇐ = _⇐;
+        idl = idl;
+        idr = idr 
+      } where
+        ⇒ : A ⋆ C → B ⋆ C
+        ⇒ (a , c) = ((a→b a) , c)
+
+        _⇐ : B ⋆ C → A ⋆ C
+        (b , c) ⇐ = ((b→a b) , c)
+
+        idl : ∀ {ac : A ⋆ C} →
+              ⇒ ac ⇐ ≡ ac
+        idl {a , c} = cong (_, c) (ida→b)
+
+        idr : ∀ {bc : B ⋆ C} →
+              ⇒ (bc ⇐) ≡ bc
+        idr {b , c} = cong (_, c) (idb→a)
+
     transportl : A ≅ B → A ⊑ C → B ⊑ C
     transportl {A} {B} {C} 
                record { ⇒ = a→b;
@@ -619,6 +675,19 @@ module BaseModel where
               ab ⇐ ≡ just a →
               ⇒ a ≡ ab
         idr {a} {inj₁ a} refl = refl
+
+    𝟘⊑𝟙 : 𝟘 ⊑ 𝟙
+    𝟘⊑𝟙 = record {
+      ⇒ = ⇒;
+      _⇐ = _⇐;
+      idl = idl;
+      idr = λ ()
+      } where
+        ⇒ = λ ()
+        _⇐ = λ tt → nothing
+
+        idl : ∀ {𝟘x : 𝟘} → ⇒ 𝟘x ⇐ ≡ just 𝟘x
+        idl {()}
 
   BaseModel : BaseTT BaseTys PI
   BaseModel = record {BaseModel}

@@ -36,6 +36,9 @@ module BaseTT where
       trans⊑ : ∀ {A B C : Ty} →
                A ⊑ B → B ⊑ C → A ⊑ C
 
+    _⊒_ : Ty → Ty → Set 𝓁
+    A ⊒ B = B ⊑ A
+
   record BaseTT {𝓁} (BT : BaseTypes {𝓁})
                     (PI : PartialIso (BaseTypes.Ty BT))
                 : Set (lsuc 𝓁) where
@@ -61,12 +64,17 @@ module BaseTT where
       ⋆Prod₃ : ∀ {A B C : Ty} → ((A ⋆ B) ⋆ C) ≅ Prod₃ A B C
       ⋆Prod₄ : ∀ {A B C D : Ty} → (((A ⋆ B) ⋆ C) ⋆ D) ≅ Prod₄ A B C D
 
+      -- ≅ laws
+      ＋≅l : ∀ {A B C : Ty} → A ≅ B → (A ＋ C) ≅ (B ＋ C)
+      ⋆≅l : ∀ {A B C : Ty} → A ≅ B → (A ⋆ C) ≅ (B ⋆ C)
+
       -- ⊑ laws
       transportl : ∀ {A B C : Ty} → A ≅ B → A ⊑ C → B ⊑ C
       transportr : ∀ {A B C : Ty} → A ≅ B → C ⊑ A → C ⊑ B
       ＋⊑l : ∀ {A B C : Ty} → A ⊑ B → (A ＋ C) ⊑ (B ＋ C)
       ⋆⊑l : ∀ {A B C : Ty} → A ⊑ B → (A ⋆ C) ⊑ (B ⋆ C)
       ＋extendl : ∀ {A B : Ty} → A ⊑ (A ＋ B)
+      𝟘⊑𝟙 : 𝟘 ⊑ 𝟙
 
     ＋idr : ∀ {A : Ty} → (A ＋ 𝟘) ≅ A
     ＋idr = trans≅ ＋comm ＋idl
@@ -74,6 +82,10 @@ module BaseTT where
     ⋆idr = trans≅ ⋆comm ⋆idl
     ⋆absorbr : ∀ {A : Ty} → (A ⋆ 𝟘) ≅ 𝟘
     ⋆absorbr = trans≅ ⋆comm ⋆absorbl
+    ＋≅r : ∀ {A B C : Ty} → B ≅ C → (A ＋ B) ≅ (A ＋ C)
+    ＋≅r b≅c = trans≅ ＋comm (trans≅ (＋≅l b≅c) ＋comm)
+    ⋆≅r : ∀ {A B C : Ty} → B ≅ C → (A ⋆ B) ≅ (A ⋆ C)
+    ⋆≅r b≅c = trans≅ ⋆comm (trans≅ (⋆≅l b≅c) ⋆comm)
     ＋⊑r : ∀ {A B C : Ty} → A ⊑ B → (C ＋ A) ⊑ (C ＋ B)
     ＋⊑r a⊑b = transportr ＋comm (transportl ＋comm (＋⊑l a⊑b))
     ⋆⊑r : ∀ {A B C : Ty} → A ⊑ B → (C ⋆ A) ⊑ (C ⋆ B)
