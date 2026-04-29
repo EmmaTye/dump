@@ -33,23 +33,18 @@ module FunTT where
               ((A ⋆ B) ⇛ C) ≅ (A ⇛ (B ⇛ C))
 
       -- ≅ and ⇛ laws
-      ⇛≅contra : ∀ {A B C : Ty} →
-                 A ≅ B →
-                 (A ⇛ C) ≅ (B ⇛ C)
-      ⇛≅cov : ∀ {A B C : Ty} →
-              B ≅ C →
-              (A ⇛ B) ≅ (A ⇛ C)
+      ⇛≅domain : ∀ {A A' B : Ty} →
+                 A ≅ A' →
+                 (A ⇛ B) ≅ (A' ⇛ B)
+      ⇛≅codomain : ∀ {A B B' : Ty} →
+                   B ≅ B' →
+                   (A ⇛ B) ≅ (A ⇛ B')
 
       -- ⊑ and ⇛ laws
-      ⇛⊑contra : ∀ {A B C : Ty} →
-                 B ⊑ A →
-                 (A ⇛ C) ⊑ (B ⇛ C)
-      ⇛⊑cov : ∀ {A B C : Ty} →
-              B ⊑ C →
-              (A ⇛ B) ⊑ (A ⇛ C)
-
-    ⇛swap : ∀ {A B C D : Ty} →
-            B ⊑ A → C ⊑ D →
-            (A ⇛ C) ⊑ (B ⇛ D)
-    ⇛swap b⊑a c⊑d = trans⊑ (⇛⊑contra b⊑a) (⇛⊑cov c⊑d)
+      ⇛⊑domain : ∀ {A A' B : Ty} →
+                 A ⊑ A' →
+                 (A ⇛ B) ⊑ (A' ⇛ B)
+      ⇛⊑codomain : ∀ {A B B' : Ty} →
+                   B ⊑ B' →
+                   (A ⇛ B) ⊑ (A ⇛ B')
 
