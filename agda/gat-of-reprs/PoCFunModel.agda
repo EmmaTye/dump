@@ -7,21 +7,23 @@ open import Data.Maybe
 open import Relation.Binary.PropositionalEquality
   using (_≡_; refl; cong; sym; trans; inspect; [_])
 
-open import BaseModel
+open import PoCModel
 open import BaseTT
 open import FunTT
 
-module FunModel where
+-- Proof of concept model of the FunTT
+-- with non-finite types
+module PoCFunModel where
 
   module FunModel where
-    open import BaseModel
+    open import PoCModel
     open BaseTys
     open PartialIsos
 
     private
       variable
         𝓁 𝓁₁ 𝓁₂ : Level
-        A B C D : Set
+        A A' B B' C D : Set
         a a' : A
         b b' : B
         c c' : C
@@ -174,9 +176,9 @@ module FunModel where
         idr-ext {g} a b = refl
 
     -- ≅ and ⇛ laws
-    ⇛≅contra : A ≅ B →
+    ⇛≅domain : A ≅ B →
                (A ⇛ C) ≅ (B ⇛ C)
-    ⇛≅contra {A} {B} {C}
+    ⇛≅domain {A} {B} {C}
              record {
                ⇒ = a→b;
                _⇐ = b→a;
@@ -201,9 +203,9 @@ module FunModel where
         idr-ext : {g : B → C} → (b : B) → (⇒ (g ⇐)) b ≡ g b
         idr-ext {g} b = cong g idb→a
 
-    ⇛≅cov : ∀ {A B C} → B ≅ C →
+    ⇛≅codomain : ∀ {A B C} → B ≅ C →
             (A ⇛ B) ≅ (A ⇛ C)
-    ⇛≅cov {A} {B} {C}
+    ⇛≅codomain {A} {B} {C}
           record {
             ⇒ = b→c;
             _⇐ = c→b;
@@ -229,37 +231,14 @@ module FunModel where
         idr-ext _ = idc→b
 
     -- ⊑ and ⇛ laws
-    ⇛⊑contra : ∀ {A B C} → B ⊑ A →
-               (A ⇛ C) ⊑ (B ⇛ C)
-    ⇛⊑contra {A} {B} {C}
-             record {
-               ⇒ = b→a;
-               _⇐ = a→mb;
-               idl = idb→a;
-               idr = ida→mb
-             } =
-      record {
-        ⇒ = ⇒;
-        _⇐ = _⇐;
-        idl = ?;
-        idr = ?
-      } where
-        ⇒ : (A → C) → (B → C)
-        ⇒ f = f ∘ b→a
+    -- Need finiteness to prove
+    ⇛⊑domain : ∀ {A A' B} → A ⊑ A' →
+               (A ⇛ B) ⊑ (A' ⇛ B)
 
-        -- TODO: I don't think this works
-        -- we can prove
-        -- _⇐ : (B → C) → (A → Maybe C)
-        -- (g ⇐) a = map g a→mb
-        -- but that's not what we want
-        -- Maybe we need a new notion of partial isomorphism
-        -- between functions...
-        _⇐ : (B → C) → Maybe (A → C)
-        g ⇐ = ?
-
-    ⇛⊑cov : ∀ {A B} → B ⊑ C →
-            (A ⇛ B) ⊑ (A ⇛ C)
+    ⇛⊑codomain : ∀ {A B B'} →
+                   B ⊑ B' →
+                   (A ⇛ B) ⊑ (A ⇛ B')
 
   FunModel : FunTT
-  FunModel = record { FunModel }
+  FunModel = record {FunModel}
 

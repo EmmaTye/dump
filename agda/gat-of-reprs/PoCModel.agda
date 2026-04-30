@@ -8,7 +8,9 @@ open import Relation.Binary.PropositionalEquality
 
 open import BaseTT
 
-module BaseModel where
+-- Proof of concept model of the BaseTT
+-- with non-finite types
+module PoCModel where
 
   private
     variable
