@@ -1,3 +1,5 @@
+{-# OPTIONS --allow-unsolved-metas #-}
+
 open import Agda.Builtin.Sigma
 open import Data.Fin
 open import Data.Nat
@@ -18,9 +20,8 @@ module FinTT where
       size : ℕ
       toTy : Fin size → Ty
       toFin : Ty → Fin size
-      fin→ty : ∀ (f : Fin size) → toFin (toTy f) ≡ f
+      fin→ty : ∀ (i : Fin size) → toFin (toTy i) ≡ i
       ty→fin : ∀ (t : Ty) → toTy (toFin t) ≡ t
-
 
   open FinTy ⦃ ... ⦄
 
@@ -51,8 +52,8 @@ module FinTT where
         toFin⇒ : (A ⇒ B) → Fin size⇒
         toFin⇒ bs = ?
 
-        fin→ty⇒ : (f : Fin size⇒) → toFin⇒ (toTy⇒ f) ≡ f
-        fin→ty⇒ f = ?
+        fin→ty⇒ : (i : Fin size⇒) → toFin⇒ (toTy⇒ i) ≡ i
+        fin→ty⇒ i = ?
 
         ty→fin⇒ : (bs : A ⇒ B) → toTy⇒ (toFin⇒ bs) ≡ bs
         ty→fin⇒ bs = ?
