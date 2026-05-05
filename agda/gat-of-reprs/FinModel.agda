@@ -16,8 +16,6 @@ open import Relation.Binary.PropositionalEquality
 open import PoCModel
 open import BaseTT
 open import FinTT
-  renaming (_∘_ to _∘′_)
-open import FunTT
 
 module FinModel where
  
