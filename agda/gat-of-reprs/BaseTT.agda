@@ -1,6 +1,7 @@
 open Agda.Primitive
 
--- TODO generate sum and prod functions up to 64, and generate relevant equalities (some sort of template code?)
+open import Data.Nat
+open import Data.Vec
 
 module BaseTT where
 
@@ -16,11 +17,9 @@ module BaseTT where
       𝟙 : Ty
       _＋_ : Ty → Ty → Ty
       _⋆_ : Ty → Ty → Ty
-      Sum₃ : Ty → Ty → Ty → Ty
-      Sum₄ : Ty → Ty → Ty → Ty → Ty
-      Prod₃ : Ty → Ty → Ty → Ty
-      Prod₄ : Ty → Ty → Ty → Ty → Ty
-
+      -- metatheoretical vector
+      Sum : {n : ℕ} → Vec Ty n → Ty
+      Prod : {n : ℕ} → Vec Ty n → Ty
   open BaseTypes ⦃ ... ⦄
 
   record PartialIso {𝓁} (Ty : Set (lsuc 𝓁))
@@ -48,7 +47,7 @@ module BaseTT where
     field
       ⦃ BT ⦄ : BaseTypes {𝓁}
       ⦃ PI ⦄ : PartialIso Ty
-      -- Commutative semi-ring on (＋,𝟘,⋆,𝟙)
+      -- Commutative rig on (＋,𝟘,⋆,𝟙)
       ＋idl : ∀ {A : Ty} → (𝟘 ＋ A) ≅ A
       ＋comm : ∀ {A B : Ty} → (A ＋ B) ≅ (B ＋ A)
       ＋ass : ∀ {A B C : Ty} → ((A ＋ B) ＋ C) ≅ (A ＋ (B ＋ C))
@@ -60,11 +59,9 @@ module BaseTT where
                 (A ⋆ (B ＋ C)) ≅ ((A ⋆ B) ＋ (A ⋆ C))
 
       -- ＋ and Sumₙ laws
-      ＋Sum₃ : ∀ {A B C : Ty} → ((A ＋ B) ＋ C) ≅ Sum₃ A B C
-      ＋Sum₄ : ∀ {A B C D : Ty} → (((A ＋ B) ＋ C) ＋ D) ≅ Sum₄ A B C D
+      ＋Sum : ∀ {n : ℕ} {As : Vec Ty n} → Sum As ≅ foldr′ _＋_ 𝟘 As
       -- ⋆ and Prodₙ laws
-      ⋆Prod₃ : ∀ {A B C : Ty} → ((A ⋆ B) ⋆ C) ≅ Prod₃ A B C
-      ⋆Prod₄ : ∀ {A B C D : Ty} → (((A ⋆ B) ⋆ C) ⋆ D) ≅ Prod₄ A B C D
+      ⋆Prod : ∀ {n : ℕ} {As : Vec Ty n} → Prod As ≅ foldr′ _⋆_ 𝟙 As
 
       -- ≅ laws
       ＋≅l : ∀ {A B C : Ty} → A ≅ B → (A ＋ C) ≅ (B ＋ C)

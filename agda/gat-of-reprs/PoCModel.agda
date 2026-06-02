@@ -1,8 +1,15 @@
+{-# OPTIONS --type-in-type #-}
+
 open import Function.Base
   using (_∘_)
+open import Data.Fin
 open import Data.Maybe
 open import Data.Maybe.Properties
   using (just-injective)
+open import Data.Nat as ℕ
+  using (ℕ)
+open import Data.Vec
+  using (Vec; []; _∷_; lookup; foldr′)
 open import Relation.Binary.PropositionalEquality
   using (_≡_; refl; cong; sym; trans; inspect; [_])
 
@@ -19,6 +26,7 @@ module PoCModel where
       b b' : B
       c c' : C
       d d' : D
+      n m : ℕ
 
   -- TODO: this isn't defined in Data.Maybe that I can find...
   private
@@ -53,22 +61,14 @@ module PoCModel where
     π₂ : A ⋆ B → B
     π₂ (a , b) = b
 
-    data Sum₃ (A₁ A₂ A₃ : Set) : Set where
-      inj₁ : A₁ → Sum₃ A₁ A₂ A₃
-      inj₂ : A₂ → Sum₃ A₁ A₂ A₃
-      inj₃ : A₃ → Sum₃ A₁ A₂ A₃
-  
-    data Sum₄ (A₁ A₂ A₃ A₄ : Set) : Set where
-      inj₁ : A₁ → Sum₄ A₁ A₂ A₃ A₄
-      inj₂ : A₂ → Sum₄ A₁ A₂ A₃ A₄
-      inj₃ : A₃ → Sum₄ A₁ A₂ A₃ A₄
-      inj₄ : A₄ → Sum₄ A₁ A₂ A₃ A₄
-  
-    data Prod₃ (A₁ A₂ A₃ : Set) : Set where
-      prod₃ : A₁ → A₂ → A₃ → Prod₃ A₁ A₂ A₃
-    
-    data Prod₄ (A₁ A₂ A₃ A₄ : Set) : Set where
-      prod₄ : A₁ → A₂ → A₃ → A₄ → Prod₄ A₁ A₂ A₃ A₄
+    data Sum (As : Vec Set n) : Set where
+      injᵢ : {i : Fin n} →
+             lookup As i → Sum As
+
+    data Prod : (As : Vec Set n) → Set where
+      emp : Prod []
+      consP : {As : Vec Set n} → (a : A) →
+              Prod As → Prod (A ∷ As)
 
   instance
     BaseTys : BaseTypes
@@ -121,13 +121,13 @@ module PoCModel where
       }
 
     trans≅ : A ≅ B → B ≅ C → A ≅ C
-    trans≅ record { ⇒ = a→b; 
-                    _⇐ = b→a; 
-                    idl = ida→b; 
+    trans≅ record { ⇒ = a→b;
+                    _⇐ = b→a;
+                    idl = ida→b;
                     idr = idb→a }
-           record { ⇒ = b→c; 
-                    _⇐ = c→b; 
-                    idl = idb→c; 
+           record { ⇒ = b→c;
+                    _⇐ = c→b;
+                    idl = idb→c;
                     idr = idc→b } =
       record {
         ⇒ = b→c ∘ a→b;
@@ -188,7 +188,7 @@ module PoCModel where
     open PartialIsos
     
     ＋idl : (𝟘 ＋ A) ≅ A
-    ＋idl {A} = record { 
+    ＋idl {A} = record {
         ⇒ = ⇒;
         _⇐ = _⇐;
         idl = idl;
@@ -205,7 +205,7 @@ module PoCModel where
         idl {𝟘a = inj₂ a} = refl
 
     ＋comm : (A ＋ B) ≅ (B ＋ A)
-    ＋comm {A} {B} = 
+    ＋comm {A} {B} =
       record {
         ⇒ = ⇒;
         _⇐ = _⇐;
@@ -337,7 +337,7 @@ module PoCModel where
         idr {()}
 
     ⋆＋dist : (A ⋆ (B ＋ C)) ≅ ((A ⋆ B) ＋ (A ⋆ C))
-    ⋆＋dist {A} {B} {C} = 
+    ⋆＋dist {A} {B} {C} =
       record {
         ⇒ = ⇒;
         _⇐ = _⇐;
@@ -346,9 +346,9 @@ module PoCModel where
       }
       where
         ⇒ : (A ⋆ (B ＋ C)) → ((A ⋆ B) ＋ (A ⋆ C))
-        ⇒ (a , (inj₁ b)) = 
+        ⇒ (a , (inj₁ b)) =
           inj₁ (a , b)
-        ⇒ (a , (inj₂ c)) = 
+        ⇒ (a , (inj₂ c)) =
           inj₂ (a , c)
 
         _⇐ : ((A ⋆ B) ＋ (A ⋆ C)) → (A ⋆ (B ＋ C))
@@ -365,113 +365,45 @@ module PoCModel where
         idr {abc = (inj₁ (a , b))} = refl
         idr {abc = (inj₂ (a , c))} = refl
 
-    ＋Sum₃ : ((A ＋ B) ＋ C) ≅ Sum₃ A B C
-    ＋Sum₃ {A} {B} {C} =
-      record {
+    ＋Sum : {As : Vec Set n} → Sum As ≅ foldr′ _＋_ 𝟘 As
+    ＋Sum = record {
         ⇒ = ⇒;
         _⇐ = _⇐;
         idl = idl;
         idr = idr
       } where
-        ⇒ : ((A ＋ B) ＋ C) → Sum₃ A B C
-        ⇒ (inj₁ (inj₁ a)) = inj₁ a
-        ⇒ (inj₁ (inj₂ b)) = inj₂ b
-        ⇒ (inj₂ c) = inj₃ c
+        ⇒ : ∀ {As : Vec Set n} →
+            Sum As → foldr′ _＋_ 𝟘 As
+        ⇒ {0} (injᵢ {i = ()} x)
+        ⇒ {As = A ∷ As} (injᵢ {i = zero} x) = inj₁ x
+        ⇒ {As = A ∷ As} (injᵢ {i = suc i} x) = inj₂ (⇒ (injᵢ {As = As} x))
 
-        _⇐ : Sum₃ A B C → ((A ＋ B) ＋ C)
-        inj₁ a ⇐ = inj₁ (inj₁ a)
-        inj₂ b ⇐ = inj₁ (inj₂ b)
-        inj₃ c ⇐ = inj₂ c
+        _⇐ : ∀ {As : Vec Set n} →
+             foldr′ _＋_ 𝟘 As → Sum As
+        _⇐ {As = _ ∷ As} (inj₁ x) = injᵢ {i = zero} x
+        _⇐ {As = A ∷ As} (inj₂ x) with _⇐ {As = As} x
+        ... | injᵢ {i = i} y = injᵢ {i = suc i} y
 
-        idl : ∀ {abc : (A ＋ B) ＋ C} →
-              ⇒ abc ⇐ ≡ abc
-        idl {inj₁ (inj₁ a)} = refl
-        idl {inj₁ (inj₂ b)} = refl
-        idl {inj₂ c} = refl
+--        idl : ∀ {As : List Set} {a : Sum As} →
+--              ⇒ a ⇐ ≡ a
+--        idl {[]} {injᵢ {i = ()} x}
+--        idl {A ∷ As} {injᵢ {i = zero} x} = refl
+--        idl {A ∷ As} {injᵢ {i = suc i} x} =
+--          let
+--            idli = idl {As} {injᵢ {i = i} x}
+--          in
+--          ?
 
-        idr : ∀ {abc : Sum₃ A B C} →
-              ⇒ (abc ⇐) ≡ abc
-        idr {inj₁ a} = refl
-        idr {inj₂ b} = refl
-        idr {inj₃ c} = refl
+        -- TODO:
+        postulate
+          idl : ∀ {As : Vec Set n} {a : Sum As} →
+                ⇒ a ⇐ ≡ a
+          idr : ∀ {As : Vec Set n} {a : (foldr′ _＋_ 𝟘 As)} →
+                (⇒ (_⇐ {As = As} a)) ≡ a
 
-    ＋Sum₄ : (((A ＋ B) ＋ C) ＋ D) ≅ Sum₄ A B C D
-    ＋Sum₄ {A} {B} {C} {D} =
-      record {
-        ⇒ = ⇒;
-        _⇐ = _⇐;
-        idl = idl;
-        idr = idr
-      } where
-        ⇒ : (((A ＋ B) ＋ C) ＋ D) → Sum₄ A B C D
-        ⇒ (inj₁ (inj₁ (inj₁ a))) = inj₁ a
-        ⇒ (inj₁ (inj₁ (inj₂ b))) = inj₂ b
-        ⇒ (inj₁ (inj₂ c)) = inj₃ c
-        ⇒ (inj₂ d) = inj₄ d
-
-        _⇐ : Sum₄ A B C D → (((A ＋ B) ＋ C) ＋ D)
-        inj₁ a ⇐ = inj₁ (inj₁ (inj₁ a))
-        inj₂ b ⇐ = inj₁ (inj₁ (inj₂ b))
-        inj₃ c ⇐ = inj₁ (inj₂ c)
-        inj₄ d ⇐ = inj₂ d
-
-        idl : ∀ {abcd : ((A ＋ B) ＋ C) ＋ D} →
-              ⇒ abcd ⇐ ≡ abcd
-        idl {inj₁ (inj₁ (inj₁ a))} = refl
-        idl {inj₁ (inj₁ (inj₂ b))} = refl
-        idl {inj₁ (inj₂ c)} = refl
-        idl {inj₂ d} = refl
-
-        idr : ∀ {abcd : Sum₄ A B C D} →
-              ⇒ (abcd ⇐) ≡ abcd
-        idr {inj₁ a} = refl
-        idr {inj₂ b} = refl
-        idr {inj₃ c} = refl
-        idr {inj₄ c} = refl
-
-    ⋆Prod₃ : ((A ⋆ B) ⋆ C) ≅ Prod₃ A B C
-    ⋆Prod₃ {A} {B} {C} =
-      record {
-        ⇒ = ⇒;
-        _⇐ = _⇐;
-        idl = idl;
-        idr = idr
-      } where
-        ⇒ : ((A ⋆ B) ⋆ C) → Prod₃ A B C
-        ⇒ ((a , b) , c) = prod₃ a b c
-
-        _⇐ : Prod₃ A B C → ((A ⋆ B) ⋆ C)
-        (prod₃ a b c) ⇐ = (a , b) , c
-
-        idl : ∀ {abc : (A ⋆ B) ⋆ C} →
-              ⇒ abc ⇐ ≡ abc
-        idl {(a , b) , c} = refl
-
-        idr : ∀ {abc : Prod₃ A B C} →
-              ⇒ (abc ⇐) ≡ abc
-        idr {prod₃ a b c} = refl
-
-    ⋆Prod₄ :  (((A ⋆ B) ⋆ C) ⋆ D) ≅ Prod₄ A B C D
-    ⋆Prod₄ {A} {B} {C} {D} =
-      record {
-        ⇒ = ⇒;
-        _⇐ = _⇐;
-        idl = idl;
-        idr = idr
-      } where
-        ⇒ : (((A ⋆ B) ⋆ C) ⋆ D) → Prod₄ A B C D
-        ⇒ (((a , b) , c) , d) = prod₄ a b c d
-
-        _⇐ : Prod₄ A B C D → (((A ⋆ B) ⋆ C) ⋆ D)
-        (prod₄ a b c d) ⇐ = ((a , b) , c) , d
-
-        idl : ∀ {abcd : ((A ⋆ B) ⋆ C) ⋆ D} →
-              ⇒ abcd ⇐ ≡ abcd
-        idl {((a , b) , c) , d} = refl
-
-        idr : ∀ {abcd : Prod₄ A B C D} →
-              ⇒ (abcd ⇐) ≡ abcd
-        idr {prod₄ a b c d} = refl
+    -- TODO:
+    postulate
+      ⋆Prod : {As : Vec Set n} → Prod As ≅ foldr′ _⋆_ 𝟙 As
 
     ＋≅l : A ≅ B → (A ＋ C) ≅ (B ＋ C)
     ＋≅l {A} {B} {C}
@@ -513,7 +445,7 @@ module PoCModel where
         ⇒ = ⇒;
         _⇐ = _⇐;
         idl = idl;
-        idr = idr 
+        idr = idr
       } where
         ⇒ : A ⋆ C → B ⋆ C
         ⇒ (a , c) = ((a→b a) , c)
@@ -534,7 +466,7 @@ module PoCModel where
                record { ⇒ = a→b;
                         _⇐ = b→a;
                         idl = ida→b;
-                        idr = idb→a } 
+                        idr = idb→a }
                record { ⇒ = a→c;
                         _⇐ = c→ma;
                         idl = ida→c;

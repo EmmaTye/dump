@@ -4,10 +4,9 @@ open import Relation.Binary.PropositionalEquality
 
 module FinTT where
 
-  -- A finite type is isomorphic to some Fin size
-  record FinTy (Ty : Set) : Set where
+  -- A finite type is isomorphic to Fin size
+  record FinTy (Ty : Set) (size : ℕ) : Set where
     field
-      size : ℕ
       toTy : Fin size → Ty
       toFin : Ty → Fin size
       fin→ty : ∀ (i : Fin size) → toFin (toTy i) ≡ i
