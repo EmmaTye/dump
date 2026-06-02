@@ -9,6 +9,7 @@ module FunTT where
       𝓁 : Level
 
   open BaseTypes ⦃ ... ⦄
+  open BaseTT.BaseTT ⦃ ... ⦄
   open PartialIso ⦃ ... ⦄
 
   record FunTT {𝓁} : Set (lsuc (lsuc 𝓁)) where
@@ -18,9 +19,10 @@ module FunTT where
       _⇛_ : Ty → Ty → Ty
 
       𝟘⇛a : ∀ {A : Ty} → (𝟘 ⇛ A) ≅ 𝟙
+
       -- If A is non-empty, then A ⇛ 𝟘 ≅ 𝟘
       -- Prevents deriving 𝟘 ≅ 𝟙
-      a⇛𝟘 : ∀ {A : Ty} → Tm A → (A ⇛ 𝟘) ≅ 𝟘
+      a⇛𝟘 : ∀ {A : Ty} → (𝟙 ⊑ A) → (A ⇛ 𝟘) ≅ 𝟘
 
       𝟙⇛a : ∀ {A : Ty} → (𝟙 ⇛ A) ≅ A
       a⇛𝟙 : ∀ {A : Ty} → (A ⇛ 𝟙) ≅ 𝟙
@@ -47,4 +49,34 @@ module FunTT where
       ⇛⊑codomain : ∀ {A B B' : Ty} →
                    B ⊑ B' →
                    (A ⇛ B) ⊑ (A ⇛ B')
+
+    uncurry : ∀ {A B C : Ty} →
+              (A ⇛ (B ⇛ C)) ≅ ((A ⋆ B) ⇛ C)
+    uncurry = sym≅ curry
+
+    lem≅dneg𝟘 : (𝟘 ＋ (𝟘 ⇛ 𝟘)) ≅ (((𝟘 ⇛ 𝟘) ⇛ 𝟘) ⇛ 𝟘)
+    lem≅dneg𝟘 =
+      trans≅ ＋idl
+        (sym≅ (trans≅ (⇛≅domain (⇛≅domain 𝟘⇛a))
+                      (⇛≅domain (a⇛𝟘 refl⊑))))
+
+    lem≅dneg𝟙⊑a : ∀ {A : Ty} → (𝟙 ⊑ A) →
+                  (A ＋ (A ⇛ 𝟘)) ≅ (((A ⇛ 𝟘) ⇛ 𝟘) ⇛ A)
+    lem≅dneg𝟙⊑a 𝟙⊑a =
+      trans≅
+        (＋≅r (a⇛𝟘 𝟙⊑a))
+        (trans≅ ＋idr
+          (sym≅ (trans≅
+            (⇛≅domain (⇛≅domain (a⇛𝟘 𝟙⊑a)))
+            (trans≅ (⇛≅domain 𝟘⇛a) 𝟙⇛a))))
+
+    -- Erasure
+    ∣_∣ : (A : Ty) → Ty
+    ∣ A ∣ = (A ⇛ 𝟘) ⇛ 𝟘
+
+    ∣𝟘∣≅𝟘 : ∣ 𝟘 ∣ ≅ 𝟘
+    ∣𝟘∣≅𝟘 = trans≅ (⇛≅domain 𝟘⇛a) (a⇛𝟘 refl⊑)
+
+    ∣a∣≅𝟙 : ∀ {A : Ty} → (𝟙 ⊑ A) → ∣ A ∣ ≅ 𝟙
+    ∣a∣≅𝟙 𝟙⊑a = trans≅ (⇛≅domain (a⇛𝟘 𝟙⊑a)) 𝟘⇛a
 

@@ -239,6 +239,4 @@ module PoCFunModel where
                    B ⊑ B' →
                    (A ⇛ B) ⊑ (A ⇛ B')
 
-  FunModel : FunTT
-  FunModel = record {FunModel}
 
