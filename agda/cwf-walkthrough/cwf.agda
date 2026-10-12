@@ -1,15 +1,15 @@
+open import Relation.Binary.PropositionalEquality
+  hiding ([_])
+open ≡-Reasoning
 
 module cwf where
 
-open import Relation.Binary.HeterogeneousEquality
-  using (_≅_; ≅-to-≡; ≡-to-≅)
-  renaming (sym to hsym; trans to htrans; cong to hcong; subst to hsubst)
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; sym; trans)
-
--- TODO: is this a primitive anywhere? I can't see it
--- and if not, why not - is it discouraged? Why so?
-coe : ∀ {i} {A B : Set i} → A ≡ B → A → B
-coe refl a = a
+-- lemma
+subst-sym : ∀ {A : Set} {P : A → Set} {a b : A}
+              {b≡a : b ≡ a} {a≡b : a ≡ b} {x : P a} {y : P b} →
+            x ≡ subst P b≡a y →
+            subst P a≡b x ≡ y
+subst-sym {b≡a = refl} {a≡b = refl} refl = refl
 
 -- NOTE: we have a separate record for the sorts so that we can use implicit variables
 -- in the equations for CwF
@@ -19,7 +19,7 @@ record CwF-sorts : Set1 where
     Ty : Con → Set -- types in specific contexts, for dependent typing
     Tm : ∀ Γ → Ty Γ -> Set -- terms in a context, with a type in that context
     Sub : Con → Con -> Set -- parallel substitution, so Sub Γ Δ assigns a term in Γ to each variable from Δ
-                            -- (list of terms, s.t. we have one list entry for each entry in Δ
+
 module CwF-sig (s : CwF-sorts)  where
   open CwF-sorts s
   variable
@@ -47,6 +47,9 @@ module CwF-sig (s : CwF-sorts)  where
       p : Sub (Γ , A) Γ -- first projection/weakening rule (you can extend any context with an additional type)
       q : Tm (Γ , A) (A [ p ]ᵀ) -- second projection, gives the term at the start of a substitution
   
+  record CwF-axioms (sig : CwF-signature) : Set where
+    open CwF-signature sig
+    field
       -- Rules
       --- substitutions:
       ϵη : (σ : Sub Γ ·) → σ ≡ ϵ -- every empty subsitution must be ϵ
@@ -57,29 +60,106 @@ module CwF-sig (s : CwF-sorts)  where
       [∘]ᵀ : A [ σ ∘ δ ]ᵀ ≡ A [ σ ]ᵀ [ δ ]ᵀ -- composing substitutions composes their application 
                                            -- (ensures that composition does what we expect)
       p∘ : p ∘ (σ ,, t) ≡ σ -- projects first component of a substitution
-      q[] : ∀ (σ : Sub Γ Δ) (t : Tm Γ (A [ σ ]ᵀ)) → q [ σ ,, t ] ≡ coe (cong (Tm Γ) (trans (cong (A [_]ᵀ) (sym p∘)) [∘]ᵀ))
-                           t
-                          -- q projects the first component of a substitution out as a term
+      q[] : ∀ {σ : Sub Γ Δ} {t : Tm Γ (A [ σ ]ᵀ)} → 
+            q [ σ ,, t ] ≡ subst (Tm Γ) (begin
+                                           (A [ σ ]ᵀ)
+                                         ≡⟨ cong (A [_]ᵀ) (sym p∘) ⟩
+                                           (A [ p ∘ (σ ,, t) ]ᵀ)
+                                         ≡⟨ [∘]ᵀ ⟩
+                                           ((A [ p ]ᵀ) [ σ ,, t ]ᵀ)
+                                         ∎)
+                                         t -- q projects the first component of a substitution out as a term
       ,η : (p {Γ} {A} ,, q) ≡ id
-      ,∘ : (σ ,, t) ∘ δ ≡ ((σ ∘ δ) ,, coe (cong (Tm Γ) (sym [∘]ᵀ))
-                                      (t [ δ ]))
+      ,∘ : ∀ {σ : Sub Γ Δ} {t : Tm Γ (A [ σ ]ᵀ)} {δ : Sub Θ Γ} →
+           (σ ,, t) ∘ δ ≡ (σ ∘ δ) ,, (subst (Tm Θ) (sym [∘]ᵀ) (t [ δ ]))
 
-module CwF-proofs (s : CwF-sorts) 
-                  (sig : CwF-sig.CwF-signature s) 
+
+module CwF-proofs (s : CwF-sorts)
+                  (sig : CwF-sig.CwF-signature s)
+                  (axioms : CwF-sig.CwF-axioms s sig)
        where
   open CwF-sorts s
   open CwF-sig.CwF-signature sig
+  open CwF-sig.CwF-axioms axioms
   variable
     Γ Δ Θ : Con
     A B C : Ty _
     t u v : Tm _ _
     σ δ ν : Sub _ _
 
-  ση : ∀ {σ : Sub Γ (Δ , A)} → 
-       σ ≡ ((p ∘ σ) ,, coe (cong (Tm Γ) (sym [∘]ᵀ)) 
-                       (q [ σ ]))
-  ση {σ = σ} = trans (trans (sym idl) (cong (λ x → x ∘ σ) (sym ,η))) ,∘
+  ση : ∀ {σ : Sub Γ (Δ , A)} →
+       σ ≡ (p ∘ σ) ,, (subst (Tm Γ) (sym [∘]ᵀ) (q [ σ ]))
+  ση {Γ = Γ} {σ = σ} =
+    let
+      q[σ] = (subst (Tm Γ) (sym [∘]ᵀ) (q [ σ ]))
+    in
+    begin
+      σ
+    ≡⟨ sym idl ⟩
+      id ∘ σ
+    ≡⟨ cong (_∘ σ) (sym ,η) ⟩
+      (p ,, q) ∘ σ
+    ≡⟨ ,∘ ⟩
+      (p ∘ σ) ,, q[σ]
+    ∎
 
-  [id] : t [ id ] ≡ coe (cong (Tm Γ) (sym [id]ᵀ)) t
---  [id] {t = t} = trans  (sym (q[] id (t [ id ]))) _
+  [id] : ∀ {A : Ty Γ} {t : Tm Γ A} → t [ id ] ≡ subst (Tm Γ) (sym [id]ᵀ) t
+  [id] {Γ = Γ} {A = A} {t = t} =
+    let
+      t' = subst (Tm Γ) (sym [id]ᵀ) t
+      q' = q [ (id ∘ id) ,, t[id]' ]
+    in
+    begin
+      t [ id ]
+    ≡⟨ {!!} ⟩ -- sym q[]
+      subst (Tm Γ) A[p][σ,,t]≡A[σ]
+        (q [ id ,, (t [ id ]) ])
+    ≡⟨ {!!} ⟩ -- cong (q [ _,, (t [ id ])) (sym idl)
+      subst (Tm Γ) A[p][σ∘id,,t]≡A[σ]
+        (q [ (id ∘ id) ,, t[id]' ])
+    ≡⟨ {!!} ⟩ -- cong (q [_]) (sym ,∘)
+      subst (Tm Γ) A[p][σ,,t∘id]≡A[σ]
+        (q [ (id ,, t') ∘ id ])
+    ≡⟨ {!!} ⟩
+      subst (Tm Γ) A[p][σ,,t]≡A[σ]
+        (q [ id ,, t' ])
+    ≡⟨ {!!} ⟩ -- q[]
+      t'
+    ∎
+    where
+      A[p][σ,,t]≡A[σ] : ∀ {Γ : Con} {A : Ty Γ} {σ : Sub Γ Γ} {t : Tm Γ (A [ σ ]ᵀ)} →
+             (A [ p ]ᵀ) [ σ ,, t ]ᵀ ≡ A [ σ ]ᵀ
+      A[p][σ,,t]≡A[σ] {A = A} {σ = σ} {t = t} =
+        begin
+          (A [ p ]ᵀ) [ σ ,, t ]ᵀ
+        ≡⟨ sym [∘]ᵀ ⟩
+          A [ p ∘ (σ ,, t) ]ᵀ
+        ≡⟨ cong (A [_]ᵀ) p∘ ⟩
+          A [ σ ]ᵀ
+        ∎
+
+      A[p][σ∘id,,t]≡A[σ] : ∀ {Γ : Con} {A : Ty Γ} {σ : Sub Γ Γ} {t : Tm Γ (A [ σ ∘ id ]ᵀ)} →
+        (A [ p ]ᵀ) [ (σ ∘ id) ,, t ]ᵀ ≡ A [ σ ]ᵀ
+      A[p][σ∘id,,t]≡A[σ] {Γ = Γ} {A = A} {σ = σ} {t = t} =
+        begin
+          (A [ p ]ᵀ) [ (σ ∘ id) ,, t ]ᵀ
+        ≡⟨ cong ((A [ p ]ᵀ) [_]ᵀ) {!!} ⟩
+          (A [ p ]ᵀ) [ σ ,, (subst (Tm Γ) (cong (A [_]ᵀ) idr) t) ]ᵀ
+        ≡⟨ A[p][σ,,t]≡A[σ] ⟩
+          A [ σ ]ᵀ
+        ∎
+
+      A[p][σ,,t∘id]≡A[σ] : ∀ {Γ : Con} {A : Ty Γ} {σ : Sub Γ Γ} {t : Tm Γ (A [ σ ]ᵀ)} →
+        (A [ p ]ᵀ) [ (σ ,, t) ∘ id ]ᵀ ≡ A [ σ ]ᵀ
+      A[p][σ,,t∘id]≡A[σ] {A = A} {σ = σ} {t = t} =
+        begin
+          (A [ p ]ᵀ) [ (σ ,, t) ∘ id ]ᵀ
+        ≡⟨ cong ((A [ p ]ᵀ [_]ᵀ)) idr ⟩
+          (A [ p ]ᵀ) [ (σ ,, t) ]ᵀ
+        ≡⟨ A[p][σ,,t]≡A[σ] ⟩
+          A [ σ ]ᵀ
+        ∎
+
+      t[id]' : Tm Γ (A [ id ∘ id ]ᵀ)
+      t[id]' = subst (Tm Γ) (cong (A [_]ᵀ) (sym idl)) (t [ id ])
 
