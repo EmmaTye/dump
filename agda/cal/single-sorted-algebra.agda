@@ -1,8 +1,5 @@
-open Agda.Primitive
-
 open import Agda.Builtin.Sigma
   renaming (Σ to _×ᴰ_; _,_ to _,ᴰ_)
-open import Agda.Builtin.Unit
 
 open import Data.Empty
 open import Data.Fin
@@ -10,27 +7,26 @@ open import Data.Fin
 open import Data.Fin.Patterns
 open import Data.Integer
   renaming (_+_ to _+ℤ_)
-open import Data.List
 open import Data.Nat
 open import Data.Product
   using (_×_; _,_)
 open import Relation.Binary.PropositionalEquality
   using (_≡_; refl; cong; sym; trans; inspect; [_])
 
-module cal where
-
-  variable
-    n m : ℕ
-    X : Set
-    Σ : ℕ → Set
-    A B : Set
+module single-sorted-algebra where
 
   Alg : (Σ : ℕ → Set) → (A : Set) → Set
   Alg Σ A = {n : ℕ} → Σ n → (Fin n → A) → A
 
-  variable
-    α α₁ α₂ : Alg _ _
+  private
+    variable
+      n m : ℕ
+      X : Set
+      Σ : ℕ → Set
+      A B : Set
+      α α₁ α₂ : Alg _ _
 
+  -- Singletons for the group signature
   data 𝐄 : Set where
     𝐞 : 𝐄
 
@@ -40,12 +36,14 @@ module cal where
   data 𝐌 : Set where
     𝐦 : 𝐌
 
+  -- Group signature
   gΣ : ℕ → Set
   gΣ 0 = 𝐄 -- e, only 0-ary op (identity)
   gΣ 1 = 𝐈 -- i, only unary op (inverse)
   gΣ 2 = 𝐌 -- m, only binary op (group op)
   gΣ (suc (suc (suc _))) = ⊥ -- no other operations of greater arity
 
+  -- Integers as an algebra over the group signature
   ℤ-α : Alg gΣ ℤ
   ℤ-α {0} _ a⁰ = 0ℤ -- 0 is the unit
   ℤ-α {1} _ a¹ = - (a¹ 0F) -- -_ is the inverse
@@ -64,8 +62,9 @@ module cal where
     ηₓ : (x : X) → Term Σ X
     ⟨_⨟_⟩ : (o : Σ m) → (Fin m → Term Σ X) → Term Σ X
 
-  variable
-    t t₁ t₂ : Term _ _
+  private
+    variable
+      t t₁ t₂ : Term _ _
 
   -- Free algebra on Set (left adjoint of U)
   F : {Σ : ℕ → Set} → (X : Set) → Alg Σ (Term Σ X)
