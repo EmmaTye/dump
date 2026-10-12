@@ -12,6 +12,7 @@
       pkgs = nixpkgs.legacyPackages.${system};
       agda = pkgs.agda.withPackages (ps: with ps; [
         standard-library
+        agda-categories
       ]);
     in {
       formatter = pkgs.nixpkgs-fmt;
@@ -26,6 +27,12 @@
           chez
           # Agda
           agda
+          # Isabelle
+          isabelle
+          # Haskell
+          cabal-install
+          haskell-language-server
+          ghc
         ];
 
         shellHook = ''

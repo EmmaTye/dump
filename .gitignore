@@ -2,4 +2,5 @@
 .envrc
 build/
 _build/
+scratch/
 
